@@ -1,5 +1,8 @@
-@main def hello: Unit = 
-  println("Hello world!")
-  println(msg)
+import scala.io.Source
 
-def msg = "I was compiled by Scala 3. :)"
+@main def main: Unit =
+	val graph = new Graph("table 1").getFromFile
+	print(graph)
+	println("--------------")
+	graph.printAdjacencyMatrix()
+
