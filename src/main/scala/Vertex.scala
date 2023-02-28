@@ -10,6 +10,9 @@ class Vertex(val name: String):
 	def addOutgoingEdge(edge: Edge): Unit = _outgoingEdges += edge
 	def addIncomingEdge(edge: Edge): Unit = _incomingEdges += edge
 
+	def isAlpha: Boolean = name == Vertex.ALPHA_NAME
+	def isOmega: Boolean = name == Vertex.OMEGA_NAME
+
 object Vertex:
 	val ALPHA_NAME = "ɑ"
 	val OMEGA_NAME = "ω"

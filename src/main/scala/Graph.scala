@@ -1,11 +1,14 @@
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
-
-class Graph(val name: String):
+class Graph(val name: Int):
 	private var _vertices: ArrayBuffer[Vertex] = ArrayBuffer()
 
 	def vertices: ArrayBuffer[Vertex] = _vertices
+	def vertices_=(vertices: ArrayBuffer[Vertex]): Unit = _vertices = vertices
+
+	def getAlphaVertex: Vertex = _vertices.find(_.isAlpha).get
+	def getOmegaVertex: Vertex = _vertices.find(_.isOmega).get
 
 	def hasCycles: Boolean =
 		val visited = ArrayBuffer[Vertex]()
@@ -33,65 +36,20 @@ class Graph(val name: String):
 		false
 
 	def isSchedulingGraph: Boolean =
-		!hasCycles && !hasNegativeDuration
+		// 1. A single entry point
+		if _vertices.count(_.isAlpha) != 1 then return false
+		// 2. A single exit point
+		if _vertices.count(_.isOmega) != 1 then return false
+		// 3. No cycles
+		if hasCycles then return false
+		// 4. Same weights for all outgoing edges of a vertex
+		if _vertices.exists(_.outgoingEdges.map(_.duration).distinct.size > 1) then return false
+		// 5. Outgoing edges of the entry vertex have zero
+		if getAlphaVertex.outgoingEdges.exists(_.duration != 0) then return false
+		// 6. No negative edges
+		if hasNegativeDuration then return false
 
-	def getFromFile: Graph =
-		val sourceFile = Source.fromFile(s"./src/resources/$name.txt")
-		val lines = sourceFile.getLines.toList
-		sourceFile.close()
-
-		def findOrCreateVertex(name: String): Vertex =
-			_vertices.find(_.name == name) match
-				case Some(vertex: Vertex) => vertex
-				case None =>
-					val vertex = new Vertex(name)
-					_vertices += vertex
-					vertex
-
-		for line <- lines do
-			val lineSplit = line.split(" ")
-			val taskNumber = lineSplit(0)
-			val duration = lineSplit(1).toInt
-			val predecessors = lineSplit.drop(2).toSet
-
-			val vertex = findOrCreateVertex(taskNumber)
-
-			for predecessorName <- predecessors do
-				val predecessor = findOrCreateVertex(predecessorName)
-
-				val edge = new Edge(predecessor, vertex, duration)
-				predecessor.addOutgoingEdge(edge)
-				vertex.addIncomingEdge(edge)
-
-		val alpha = new Vertex(Vertex.ALPHA_NAME)
-		for vertex <- _vertices do
-			if vertex.incomingEdges.isEmpty then
-				val edge = new Edge(alpha, vertex, 0)
-				alpha.addOutgoingEdge(edge)
-				vertex.addIncomingEdge(edge)
-
-		_vertices += alpha
-
-		val omega = new Vertex(Vertex.OMEGA_NAME)
-		for vertex <- _vertices do
-			if vertex.outgoingEdges.isEmpty then
-				val edge = new Edge(vertex, omega, 0)
-				vertex.addOutgoingEdge(edge)
-				omega.addIncomingEdge(edge)
-
-		_vertices += omega
-
-		def sorter(a: Vertex, b: Vertex): Boolean =
-			if a.name == Vertex.OMEGA_NAME || b.name == Vertex.ALPHA_NAME  then
-				return false
-			if a.name == Vertex.ALPHA_NAME || b.name == Vertex.OMEGA_NAME  then
-				return true
-			a.name.toInt < b.name.toInt
-
-		// Sort the vertices so that the first one is the alpha vertex, and the last one is the omega vertex
-		_vertices  = _vertices.sortWith(sorter)
-
-		this
+		true
 
 	def adjacencyMatrix: Array[Array[Option[Int]]] =
 		val matrix = Array.ofDim[Option[Int]](_vertices.size, _vertices.size)
@@ -126,13 +84,92 @@ class Graph(val name: String):
 				)
 			println()
 
+//def shortestPath: ArrayBuffer[Vertex] =
+//	// Dijkstra’s algorithm
+//	var cc = ArrayBuffer[Vertex]()
+//	var m = _vertices
+
+//	var dijkstraMatrix = Array.ofDim[Int](_vertices.length, _vertices.length)
+//
+
+//	while m.nonEmpty do
+
+
+//	cc
+
 	override def toString: String =
 		var res = ""
 		for vertex <- _vertices do
 			for edge <- vertex.outgoingEdges do
-				res += vertex.name + " ---" + edge.duration + "--> " + edge.to.name + "\n"
+				res += vertex.name + "  ---" + edge.duration + "-->  " + edge.to.name + "\n"
 
-		res += "\n\n- Has cycles: " + hasCycles + "\n"
-		res += "- Has negative durations: " + hasNegativeDuration + "\n"
-		res += "- Is scheduling graph: " + isSchedulingGraph + "\n"
+		res += "\n\n- Is scheduling graph: " + isSchedulingGraph + "\n"
+		res += "    ↳ Has cycles: " + hasCycles + "\n"
+		res += "    ↳ Has negative durations: " + hasNegativeDuration + "\n"
+
 		res
+
+object Graph:
+	def makeFromLines(name: Int, lines: List[String]): Graph =
+		val graph = new Graph(name)
+
+		def findOrCreateVertex(name: String): Vertex =
+			graph.vertices.find(_.name == name) match
+				case Some(vertex: Vertex) => vertex
+				case None =>
+					val vertex = new Vertex(name)
+					graph.vertices += vertex
+					vertex
+
+		for line <- lines do
+			val lineSplit = line.split(" ")
+			val taskNumber = lineSplit(0)
+			val duration = lineSplit(1).toInt
+			val predecessors = lineSplit.drop(2).toSet
+
+			val vertex = findOrCreateVertex(taskNumber)
+
+			for predecessorName <- predecessors do
+				val predecessor = findOrCreateVertex(predecessorName)
+
+				val edge = new Edge(predecessor, vertex, duration)
+				predecessor.addOutgoingEdge(edge)
+				vertex.addIncomingEdge(edge)
+
+		val alpha = new Vertex(Vertex.ALPHA_NAME)
+		for vertex <- graph.vertices do
+			if vertex.incomingEdges.isEmpty then
+				val edge = new Edge(alpha, vertex, 0)
+				alpha.addOutgoingEdge(edge)
+				vertex.addIncomingEdge(edge)
+
+		graph.vertices += alpha
+
+		val omega = new Vertex(Vertex.OMEGA_NAME)
+		for vertex <- graph.vertices do
+			if vertex.outgoingEdges.isEmpty then
+				val edge = new Edge(vertex, omega, 0)
+				vertex.addOutgoingEdge(edge)
+				omega.addIncomingEdge(edge)
+
+		graph.vertices += omega
+
+		def sorter(a: Vertex, b: Vertex): Boolean =
+			if a.name == Vertex.OMEGA_NAME || b.name == Vertex.ALPHA_NAME then
+				return false
+			if a.name == Vertex.ALPHA_NAME || b.name == Vertex.OMEGA_NAME then
+				return true
+			a.name.toInt < b.name.toInt
+
+		// Sort the vertices so that the first one is the alpha vertex, and the last one is the omega vertex
+		graph.vertices = graph.vertices.sortWith(sorter)
+
+		graph
+
+	def makeFromFile(name: Int): Graph =
+		val sourceFile = Source.fromFile(s"./src/resources/$name.txt")
+
+		val lines = sourceFile.getLines.toList
+		sourceFile.close()
+
+		makeFromLines(name, lines)
