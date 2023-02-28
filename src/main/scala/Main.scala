@@ -16,9 +16,7 @@ import scala.io.StdIn.readInt
 			val command = readInt()
 			command match
 				case 1 => println(graph)
-				case 2 => graph.printAdjacencyMatrix()
-				case 3 => graph = chooseGraph
-				case 4 => quit = true
+				case 2 => Graph.printAdjacencyMatrix(graph)
 				case _ => println("Invalid command")
 		catch
 			case e: Exception => println("Invalid command")

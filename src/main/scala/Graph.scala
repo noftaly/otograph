@@ -65,25 +65,6 @@ class Graph(val name: Int):
 				matrix(predecessorIndex)(successorIndex) = Some(edge.duration)
 		matrix
 
-	def printAdjacencyMatrix(): Unit =
-		val matrix = adjacencyMatrix
-
-		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
-		val names = _vertices.map(_.name).map(name => name match
-			case Vertex.ALPHA_NAME | Vertex.OMEGA_NAME => s" $name"
-			case _ => f"${name.toInt}%02d"
-		)
-
-		println("   " + names.mkString(" "))
-		for i <- matrix.indices do
-			print(names(i) + " ")
-			for j <- matrix.indices do
-				print(matrix(i)(j) match
-					case Some(value) => f"$value% 2d "
-					case None => " • "
-				)
-			println()
-
 //def shortestPath: ArrayBuffer[Vertex] =
 //	// Dijkstra’s algorithm
 //	var cc = ArrayBuffer[Vertex]()
@@ -110,6 +91,13 @@ class Graph(val name: Int):
 		res
 
 object Graph:
+	def sorter(a: Vertex, b: Vertex): Boolean =
+		if a.name == Vertex.OMEGA_NAME || b.name == Vertex.ALPHA_NAME then
+			return false
+		if a.name == Vertex.ALPHA_NAME || b.name == Vertex.OMEGA_NAME then
+			return true
+		a.name.toInt < b.name.toInt
+
 	def makeFromLines(name: Int, lines: List[String]): Graph =
 		val graph = new Graph(name)
 
@@ -154,15 +142,8 @@ object Graph:
 
 		graph.vertices += omega
 
-		def sorter(a: Vertex, b: Vertex): Boolean =
-			if a.name == Vertex.OMEGA_NAME || b.name == Vertex.ALPHA_NAME then
-				return false
-			if a.name == Vertex.ALPHA_NAME || b.name == Vertex.OMEGA_NAME then
-				return true
-			a.name.toInt < b.name.toInt
-
 		// Sort the vertices so that the first one is the alpha vertex, and the last one is the omega vertex
-		graph.vertices = graph.vertices.sortWith(sorter)
+		graph.vertices = graph.vertices.sortWith(Graph.sorter)
 
 		graph
 
@@ -173,3 +154,22 @@ object Graph:
 		sourceFile.close()
 
 		makeFromLines(name, lines)
+
+	def printAdjacencyMatrix(graph: Graph): Unit =
+		val matrix = graph.adjacencyMatrix
+
+		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
+		val names = graph.vertices.map(_.name).map(name => name match
+			case Vertex.ALPHA_NAME | Vertex.OMEGA_NAME => s" $name"
+			case _ => f"${name.toInt}%02d"
+		)
+
+		println("   " + names.mkString(" "))
+		for i <- matrix.indices do
+			print(names(i) + " ")
+			for j <- matrix.indices do
+				print(matrix(i)(j) match
+					case Some(value) => f"$value% 2d "
+					case None => " • "
+				)
+			println()
