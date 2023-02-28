@@ -78,6 +78,34 @@ class Graph(val name: Int):
 
 //	cc
 
+	def computeRanks: scala.collection.mutable.Map[Vertex, Int] =
+		val ranks = scala.collection.mutable.Map[Vertex, Int]()
+		val predecessors = Array.ofDim[Int](_vertices.length)
+
+		// For all vertices, set their rank to the number of incoming edges
+		for (vertex, idx) <- _vertices.zipWithIndex do
+			predecessors(idx) = vertex.incomingEdges.length
+
+		var k = 0
+		var sources = Array[Set[Vertex]]()
+
+		sources :+= Set[Vertex]()
+		sources(0) += getAlphaVertex
+
+		while sources.length != _vertices.length do
+			sources :+= Set[Vertex]()
+
+			for vertex <- sources(k) do
+				ranks += (vertex -> k)
+
+				for successorVertex <- vertex.outgoingEdges.map(_.to) do
+					predecessors(_vertices.indexOf(successorVertex)) -= 1
+
+					if predecessors(_vertices.indexOf(successorVertex)) == 0 then
+						sources(k + 1) += successorVertex
+			k += 1
+		ranks
+
 	override def toString: String =
 		var res = ""
 		for vertex <- _vertices do
@@ -173,3 +201,9 @@ object Graph:
 					case None => " • "
 				)
 			println()
+
+	def printRanks(graph: Graph): Unit =
+		val ranks = graph.computeRanks.toSeq.sortWith((a, b) => Graph.sorter(a._1, b._1))
+
+		for (vertex, rank) <- ranks do
+			println(vertex.name + " -> " + rank)
