@@ -1,6 +1,6 @@
 import scala.collection.mutable.ArrayBuffer
 
-class Vertex(val name: String):
+class Vertex(val name: String, val duration: Integer):
 	private val _outgoingEdges: ArrayBuffer[Edge] = ArrayBuffer()
 	private val _incomingEdges: ArrayBuffer[Edge] = ArrayBuffer()
 

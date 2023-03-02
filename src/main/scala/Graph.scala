@@ -129,44 +129,43 @@ object Graph:
 	def makeFromLines(name: Int, lines: List[String]): Graph =
 		val graph = new Graph(name)
 
-		def findOrCreateVertex(name: String): Vertex =
-			graph.vertices.find(_.name == name) match
-				case Some(vertex: Vertex) => vertex
-				case None =>
-					val vertex = new Vertex(name)
-					graph.vertices += vertex
-					vertex
+		def makeEdge(from: Vertex, to: Vertex): Unit =
+			val edge = new Edge(from, to, from.duration)
+			from.addOutgoingEdge(edge)
+			to.addIncomingEdge(edge)
 
+		// First pass over all the lines to create the vertices
 		for line <- lines do
 			val lineSplit = line.split(" ")
 			val taskNumber = lineSplit(0)
 			val duration = lineSplit(1).toInt
+
+			val vertex = new Vertex(taskNumber, duration)
+			graph.vertices += vertex
+
+		// Second pass over all the lines to create the edges
+		for line <- lines do
+			val lineSplit = line.split(" ")
+			val taskNumber = lineSplit(0)
 			val predecessors = lineSplit.drop(2).toSet
 
-			val vertex = findOrCreateVertex(taskNumber)
+			val vertex = graph.vertices.find(_.name == taskNumber).get
 
 			for predecessorName <- predecessors do
-				val predecessor = findOrCreateVertex(predecessorName)
+				val predecessor = graph.vertices.find(_.name == predecessorName).get
+				makeEdge(predecessor, vertex)
 
-				val edge = new Edge(predecessor, vertex, duration)
-				predecessor.addOutgoingEdge(edge)
-				vertex.addIncomingEdge(edge)
-
-		val alpha = new Vertex(Vertex.ALPHA_NAME)
+		val alpha = new Vertex(Vertex.ALPHA_NAME, 0)
 		for vertex <- graph.vertices do
 			if vertex.incomingEdges.isEmpty then
-				val edge = new Edge(alpha, vertex, 0)
-				alpha.addOutgoingEdge(edge)
-				vertex.addIncomingEdge(edge)
+				makeEdge(alpha, vertex)
 
 		graph.vertices += alpha
 
-		val omega = new Vertex(Vertex.OMEGA_NAME)
+		val omega = new Vertex(Vertex.OMEGA_NAME, 0)
 		for vertex <- graph.vertices do
 			if vertex.outgoingEdges.isEmpty then
-				val edge = new Edge(vertex, omega, 0)
-				vertex.addOutgoingEdge(edge)
-				omega.addIncomingEdge(edge)
+				makeEdge(vertex, omega)
 
 		graph.vertices += omega
 
