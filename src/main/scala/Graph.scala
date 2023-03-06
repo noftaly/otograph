@@ -67,10 +67,10 @@ class Graph(val name: Int):
 
 	def dijkstraMatrix: ArrayBuffer[ArrayBuffer[Int|Null]] =
 		// Dijkstra’s algorithm
-		var cc = ArrayBuffer[Vertex]()
-		var m =	_vertices.clone()
+		val cc = ArrayBuffer[Vertex]()
+		val m =	_vertices.clone()
 		var actualVertex = _vertices.head
-		var dijkstraMatrix: ArrayBuffer[ArrayBuffer[Int|Null]] = ArrayBuffer.fill(_vertices.size, _vertices.size)(Int.MaxValue)
+		val dijkstraMatrix: ArrayBuffer[ArrayBuffer[Int|Null]] = ArrayBuffer.fill(_vertices.size, _vertices.size)(Int.MaxValue)
 		var i = 0
 		val edgeMap = _vertices.map(_.name).zipWithIndex.toMap
 		dijkstraMatrix(i)(edgeMap(actualVertex.name)) = 0
@@ -87,16 +87,14 @@ class Graph(val name: Int):
 			for edge <- actualVertex.outgoingEdges do
 				if m.contains(edge.to) then
 					val actualValue = edge.duration + dijkstraMatrix(i)(edgeMap(actualVertex.name)).asInstanceOf[Int]
-					val oldValue = (if i == 0 then Int.MaxValue else dijkstraMatrix(i - 1)(edgeMap(edge.to.name)).asInstanceOf[Int])
+					val oldValue = if i == 0 then Int.MaxValue else dijkstraMatrix(i - 1)(edgeMap(edge.to.name)).asInstanceOf[Int]
 					dijkstraMatrix(i)(edgeMap(edge.to.name)) = Math.min(actualValue, oldValue)
 
-			for (n: Int) <- i+1 until _vertices.size do
+			for n <- i+1 until _vertices.size do
 				dijkstraMatrix(n)(edgeMap(actualVertex.name)) = null
 
-
-
 			if m.nonEmpty then
-				var minEdge = m.minBy((v: Vertex) => dijkstraMatrix.map((row)=>
+				val minEdge = m.minBy((v: Vertex) => dijkstraMatrix.map(row =>
 					row(edgeMap(v.name)) match
 						case null => Int.MaxValue
 						case value => value.asInstanceOf[Int]
@@ -105,10 +103,6 @@ class Graph(val name: Int):
 				actualVertex = minEdge
 
 			i += 1
-
-			println("cc: "+cc.map(_.name))
-			println("m: "+m.map(_.name))
-			println("actualVertex: "+actualVertex.name)
 
 		dijkstraMatrix
 
