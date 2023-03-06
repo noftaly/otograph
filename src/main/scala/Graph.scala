@@ -164,7 +164,8 @@ object Graph:
 		val graph = new Graph(name)
 
 		def makeEdge(from: Vertex, to: Vertex): Unit =
-			val edge = new Edge(from, to, from.duration)
+			val duration: Int = if to.isOmega then 0 else from.duration
+			val edge = new Edge(from, to, duration)
 			from.addOutgoingEdge(edge)
 			to.addIncomingEdge(edge)
 
