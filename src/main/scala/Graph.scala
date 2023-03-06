@@ -65,18 +65,52 @@ class Graph(val name: Int):
 				matrix(predecessorIndex)(successorIndex) = Some(edge.duration)
 		matrix
 
-//def shortestPath: ArrayBuffer[Vertex] =
-//	// Dijkstra’s algorithm
-//	var cc = ArrayBuffer[Vertex]()
-//	var m = _vertices
+	def dijkstraMatrix: ArrayBuffer[ArrayBuffer[Int|Null]] =
+		// Dijkstra’s algorithm
+		var cc = ArrayBuffer[Vertex]()
+		var m =	_vertices.clone()
+		var actualVertex = _vertices.head
+		var dijkstraMatrix: ArrayBuffer[ArrayBuffer[Int|Null]] = ArrayBuffer.fill(_vertices.size, _vertices.size)(Int.MaxValue)
+		var i = 0
+		val edgeMap = _vertices.map(_.name).zipWithIndex.toMap
+		dijkstraMatrix(i)(edgeMap(actualVertex.name)) = 0
 
-//	var dijkstraMatrix = Array.ofDim[Int](_vertices.length, _vertices.length)
-//
+		while m.nonEmpty do
+			cc += actualVertex
+			m -= actualVertex
 
-//	while m.nonEmpty do
+			if i > 0 then
+				for n <- _vertices.indices do
+					if dijkstraMatrix(i)(n) != null then
+						dijkstraMatrix(i)(n) = dijkstraMatrix(i-1)(n)
+
+			for edge <- actualVertex.outgoingEdges do
+				if m.contains(edge.to) then
+					val actualValue = edge.duration + dijkstraMatrix(i)(edgeMap(actualVertex.name)).asInstanceOf[Int]
+					val oldValue = (if i == 0 then Int.MaxValue else dijkstraMatrix(i - 1)(edgeMap(edge.to.name)).asInstanceOf[Int])
+					dijkstraMatrix(i)(edgeMap(edge.to.name)) = Math.min(actualValue, oldValue)
+
+			for (n: Int) <- i+1 until _vertices.size do
+				dijkstraMatrix(n)(edgeMap(actualVertex.name)) = null
 
 
-//	cc
+
+			if m.nonEmpty then
+				var minEdge = m.minBy((v: Vertex) => dijkstraMatrix.map((row)=>
+					row(edgeMap(v.name)) match
+						case null => Int.MaxValue
+						case value => value.asInstanceOf[Int]
+				).min)
+
+				actualVertex = minEdge
+
+			i += 1
+
+			println("cc: "+cc.map(_.name))
+			println("m: "+m.map(_.name))
+			println("actualVertex: "+actualVertex.name)
+
+		dijkstraMatrix
 
 	def computeRanks: scala.collection.mutable.Map[Vertex, Int] =
 		val ranks = scala.collection.mutable.Map[Vertex, Int]()
@@ -206,3 +240,20 @@ object Graph:
 
 		for (vertex, rank) <- ranks do
 			println(vertex.name + " -> " + rank)
+	def printDijkstraMatrix(graph:Graph): Unit =
+		val matrix = graph.dijkstraMatrix
+
+		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
+		val names = graph.vertices.map(_.name).map(name => name match
+			case Vertex.ALPHA_NAME | Vertex.OMEGA_NAME => s" $name"
+			case _ => f"${name.toInt}%02d"
+		)
+
+		println( names.mkString(" "))
+		for i <- matrix.indices do
+			for j <- matrix.indices do
+				print(matrix(i)(j) match
+					case null => " • "
+					case i:Int => if i == Int.MaxValue then " ∞ " else f"$i% 2d "
+				)
+			println()

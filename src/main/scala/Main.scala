@@ -4,6 +4,7 @@ import scala.io.StdIn.readInt
 @main def main: Unit =
 	var quit = false
 	var graph = chooseGraph
+	var command: Int= 0
 
 	while !quit do
 		println("\n\n\n\n")
@@ -11,20 +12,24 @@ import scala.io.StdIn.readInt
 			|1: Print the edges
 			|2: Print the adjacency matrix
 			|3: Print the ranks
-			|4: Change the graph
-			|5: Quit""".stripMargin)
+			|4: Show Dijkstra's table
+			|5: Change the graph
+			|6: Quit""".stripMargin)
 		try
-			val command = readInt()
+			command = readInt()
 			println("\n\n\n\n")
-			command match
-				case 1 => println(graph)
-				case 2 => Graph.printAdjacencyMatrix(graph)
-				case 3 => Graph.printRanks(graph)
-				case 4 => graph = chooseGraph
-				case 5 => quit = true
-				case _ => println("Invalid command")
+
 		catch
 			case e: Exception => println("Invalid command")
+
+		command match
+			case 1 => println(graph)
+			case 2 => Graph.printAdjacencyMatrix(graph)
+			case 3 => Graph.printRanks(graph)
+			case 4 => Graph.printDijkstraMatrix(graph)
+			case 5 => graph = chooseGraph
+			case 6 => quit = true
+			case _ => println("Invalid command")
 
 def chooseGraph: Graph =
 	var graph: Option[Graph] = None
