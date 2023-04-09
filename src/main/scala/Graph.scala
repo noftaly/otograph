@@ -163,35 +163,53 @@ class Graph(val name: Int):
 			k += 1
 		earliestDates
 
-	def computeLatestDates: scala.collection.mutable.Map[Vertex, Int] =
+	def computeLatestDates: scala.collection.mutable.Map[Vertex, Int] = {
 		val ranks = computeRanks
 		val latestDates = scala.collection.mutable.Map[Vertex, Int]()
-
-		// For all vertices, set their latest date to the latest date of the last vertex
-		for vertex <- _vertices do
-			latestDates += (vertex -> computeEarliestDates(getOmegaVertex))
+		
+		// Set the latest date of the omega vertex as the current date
+		// latestDates(getOmegaVertex) = 0
+		latestDates(getOmegaVertex) = computeEarliestDates(getOmegaVertex)
+		
+		// For each rank starting from the omega vertex, find the latest date of the predecessors
+		for (k <- (ranks(getOmegaVertex) - 1) to 0 by -1) {
+			for (vertex <- _vertices if ranks(vertex) == k) {
+				// Compute the latest date of the vertex as the minimum of the latest dates of its successors
+				val latestDate = vertex.outgoingEdges.map(edge => latestDates(edge.to) - edge.duration).min
+				// Update the latest date of the vertex
+				latestDates(vertex) = latestDate
+			}
+		}
+		
 		latestDates
+	}
 
-	def computeSlacks: scala.collection.mutable.Map[Vertex, Int] =
+	//Slacks (float) = latest date - earliest date
+	def computeSlacks: scala.collection.mutable.Map[Vertex, Int] = 
 		val slacks = scala.collection.mutable.Map[Vertex, Int]()
 
+		// For all vertices, set their slack (float) to the difference between the latest date and the earliest date
 		for vertex <- _vertices do
 			slacks += (vertex -> (computeLatestDates(vertex) - computeEarliestDates(vertex)))
 		slacks
 
-	def computeCriticalPath: List[Vertex] =
-		val criticalPath = ListBuffer[Vertex]()
-		val slacks = computeSlacks
+	def computeCriticalPath: List[Edge] = 
+		// Compute the earliest and latest dates of the vertices
+		val earliestDates = computeEarliestDates
+		val latestDates = computeLatestDates
 
-		var vertex = getOmegaVertex
-		criticalPath += vertex
+		// Find the vertices with the same earliest and latest dates
+		val criticalVertices = _vertices.filter(vertex => earliestDates(vertex) == latestDates(vertex))
 
-		while vertex != getAlphaVertex do
-			val predecessor = vertex.incomingEdges.minBy(_.duration).from
-			criticalPath += predecessor
-			vertex = predecessor
+		// Find all the paths that go through the critical vertices
+		val criticalPaths = criticalVertices.map(vertex => findPaths(vertex, getOmegaVertex))
+		
+		// Find the critical path with the maximum duration
+		val criticalPath = criticalPaths.maxBy(path => path.map(_.duration).sum)
 
-		criticalPath.reverse.toList
+		// Return the edges in the critical path
+		criticalPath
+		
 
 
 	override def toString: String =
