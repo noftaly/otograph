@@ -193,24 +193,14 @@ class Graph(val name: Int):
 			slacks += (vertex -> (computeLatestDates(vertex) - computeEarliestDates(vertex)))
 		slacks
 
-	def computeCriticalPath: List[Edge] = 
-		// Compute the earliest and latest dates of the vertices
+	def computeCriticalPath: List[Vertex] = 
+		// Get the earliest dates and the latest dates
 		val earliestDates = computeEarliestDates
 		val latestDates = computeLatestDates
 
-		// Find the vertices with the same earliest and latest dates
-		val criticalVertices = _vertices.filter(vertex => earliestDates(vertex) == latestDates(vertex))
-
-		// Find all the paths that go through the critical vertices
-		val criticalPaths = criticalVertices.map(vertex => findPaths(vertex, getOmegaVertex))
-		
-		// Find the critical path with the maximum duration
-		val criticalPath = criticalPaths.maxBy(path => path.map(_.duration).sum)
-
-		// Return the edges in the critical path
-		criticalPath
-		
-
+		// Check for each vertex if the earliest date is equal to the latest date
+		// If so, the vertex is on the critical path
+		_vertices.filter(vertex => earliestDates(vertex) == latestDates(vertex)).toList
 
 	override def toString: String =
 		var res = ""
