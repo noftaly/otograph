@@ -279,7 +279,7 @@ object Graph:
 
 		makeFromLines(name, lines)
 
-	def printAdjacencyMatrix(graph: Graph): Unit =
+	def printAdjacencyMatrix(graph: Graph): Unit = {
 		val matrix = graph.adjacencyMatrix
 
 		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
@@ -297,14 +297,46 @@ object Graph:
 					case None => " • "
 				)
 			println()
+	}
 
-	def printRanks(graph: Graph): Unit =
+	def toStringAdjacencyMatrix(graph: Graph): String = {
+		val matrix = graph.adjacencyMatrix
+		val result = new StringBuilder
+
+		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
+		val names = graph.vertices.map(_.name).map(name => name match {
+			case Vertex.ALPHA_NAME | Vertex.OMEGA_NAME => s" $name"
+			case _ => f"${name.toInt}%02d"
+		})
+
+		result.append("   " + names.mkString(" ") + "\n")
+		for (i <- matrix.indices) {
+			result.append(names(i) + " ")
+			for (j <- matrix.indices) {
+				result.append(matrix(i)(j) match {
+					case Some(value) => f"$value% 2d "
+					case None => " • "
+				})
+			}
+			result.append("\n")
+		}
+		result.toString
+	}
+	def printRanks(graph: Graph): Unit = {
 		val ranks = graph.computeRanks.toSeq.sortWith((a, b) => Graph.sorter(a._1, b._1))
 
 		for (vertex, rank) <- ranks do
 			println(vertex.name + " -> " + rank)
-
-	def printDijkstraMatrix(graph:Graph): Unit =
+	}
+	def toStringRanks(graph: Graph): String = {
+			val ranks = graph.computeRanks.toSeq.sortWith((a, b) => Graph.sorter(a._1, b._1))
+			val result = new StringBuilder
+			for ((vertex, rank) <- ranks) {
+				result.append(vertex.name + " -> " + rank + "\n")
+			}
+			result.toString
+		}
+	def printDijkstraMatrix(graph:Graph): Unit = {
 		val matrix = graph.dijkstraMatrix
 
 		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
@@ -313,15 +345,38 @@ object Graph:
 			case _ => f"${name.toInt}%02d"
 		)
 
-		println( names.mkString(" "))
+		println(names.mkString(" "))
 		for i <- matrix.indices do
 			for j <- matrix.indices do
 				print(matrix(i)(j) match
 					case null => " • "
-					case i:Int => if i == Int.MaxValue then " ∞ " else f"$i% 2d "
+					case i: Int => if i == Int.MaxValue then " ∞ " else f"$i% 2d "
 				)
 			println()
-		
+	}
+
+	def toStringDijkstraMatrix(graph: Graph): String = {
+		val matrix = graph.dijkstraMatrix
+		val result = new StringBuilder
+
+		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
+		val names = graph.vertices.map(_.name).map(name => name match {
+			case Vertex.ALPHA_NAME | Vertex.OMEGA_NAME => s" $name"
+			case _ => f"${name.toInt}%02d"
+		})
+
+		result.append(names.mkString(" ") + "\n")
+		for (i <- matrix.indices) {
+			for (j <- matrix.indices) {
+				result.append(matrix(i)(j) match {
+					case null => " • "
+					case i: Int => if (i == Int.MaxValue) " ∞ " else f"$i% 2d "
+				})
+			}
+			result.append("\n")
+		}
+		result.toString
+	}
 	def printCalendar(graph: Graph): Unit = {
 		if (graph.hasCycles || graph.hasNegativeDuration) {
 			println("We cannot display the calendar for this graph.")
@@ -365,4 +420,51 @@ object Graph:
 				println(criticalPath.map(_.name).mkString(" -> "))
 			}
 		}
+	}
+
+	def toStringCalendar(graph: Graph): String = {
+		val result = new StringBuilder
+		if (graph.hasCycles || graph.hasNegativeDuration) {
+			result.append("We cannot display the calendar for this graph.\n")
+		} else {
+			val earliestDates = graph.computeEarliestDates
+			val latestDates = graph.computeLatestDates
+			val slacks = graph.computeSlacks
+			val ranks = graph.computeRanks
+
+			// Sort vertices by rank, then by name or number
+			val sortedVertices = graph.vertices.toSeq.sortBy { vertex =>
+				if (vertex.name == "ɑ") {
+					(0, -1) // ɑ comes first
+				} else if (vertex.name == "ω") {
+					(Int.MaxValue, Int.MaxValue) // ω comes last
+				} else {
+					(ranks(vertex), vertex.name.toInt) // sort by rank, then by number
+				}
+			}
+
+			// Print the header
+			result.append(f"${"Vertices"}%8s | ${"Rank"}%4s | ${"Earliest Date"}%13s | ${"Latest Date"}%11s | ${"Slack"}%5s\n")
+			result.append("=" * 53 + "\n")
+
+			// Print the data for each vertex
+			for (vertex <- sortedVertices) {
+				val earliestDate = earliestDates(vertex)
+				val latestDate = latestDates(vertex)
+				val slack = slacks(vertex)
+				val rank = ranks(vertex)
+
+				result.append(f"${vertex.name}%8s | ${rank}%4d | ${earliestDate}%13d | ${latestDate}%11d | ${slack}%5d\n")
+			}
+
+			result.append("\n")
+			val criticalPath = graph.computeCriticalPath
+			if (criticalPath.isEmpty) {
+				result.append("The graph has cycles or negative duration and does not have a critical path.\n")
+			} else {
+				result.append("The critical path is:\n")
+				result.append(criticalPath.map(_.name).mkString(" -> ") + "\n")
+			}
+		}
+		result.toString
 	}
