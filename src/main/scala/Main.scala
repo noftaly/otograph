@@ -13,8 +13,9 @@ import scala.io.StdIn.readInt
 			|2: Print the adjacency matrix
 			|3: Print the ranks
 			|4: Show Dijkstra's table
-			|5: Change the graph
-			|6: Quit""".stripMargin)
+			|5: Print the calendar and the critical path
+			|6: Change the graph
+			|7: Quit""".stripMargin)
 		try
 			command = readInt()
 			println("\n\n\n\n")
@@ -27,8 +28,9 @@ import scala.io.StdIn.readInt
 			case 2 => Graph.printAdjacencyMatrix(graph)
 			case 3 => Graph.printRanks(graph)
 			case 4 => Graph.printDijkstraMatrix(graph)
-			case 5 => graph = chooseGraph
-			case 6 => quit = true
+			case 5 => Graph.printCalendar(graph)
+			case 6 => graph = chooseGraph
+			case 7 => quit = true
 			case _ => println("Invalid command")
 
 def chooseGraph: Graph =
