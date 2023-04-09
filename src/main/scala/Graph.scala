@@ -1,4 +1,5 @@
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
 class Graph(val name: Int):
@@ -134,6 +135,65 @@ class Graph(val name: Int):
 			k += 1
 		ranks
 
+	def computeEarliestDates: scala.collection.mutable.Map[Vertex, Int] =
+		val ranks = computeRanks
+		val earliestDates = scala.collection.mutable.Map[Vertex, Int]()
+
+		// For all vertices, set their earliest date to 0
+		for vertex <- _vertices do
+			earliestDates += (vertex -> 0)
+
+		var k = 0
+		var sources = Array[Set[Vertex]]()
+
+		sources :+= Set[Vertex]()
+		sources(0) += getAlphaVertex
+
+		while sources.length != _vertices.length do
+			sources :+= Set[Vertex]()
+
+			for vertex <- sources(k) do
+				for successorVertex <- vertex.outgoingEdges.map(_.to) do
+					val newEarliestDate = earliestDates(vertex) + vertex.outgoingEdges.find(_.to == successorVertex).get.duration
+					if newEarliestDate > earliestDates(successorVertex) then
+						earliestDates += (successorVertex -> newEarliestDate)
+
+					if ranks(successorVertex) == k + 1 then
+						sources(k + 1) += successorVertex
+			k += 1
+		earliestDates
+
+	def computeLatestDates: scala.collection.mutable.Map[Vertex, Int] =
+		val ranks = computeRanks
+		val latestDates = scala.collection.mutable.Map[Vertex, Int]()
+
+		// For all vertices, set their latest date to the latest date of the last vertex
+		for vertex <- _vertices do
+			latestDates += (vertex -> computeEarliestDates(getOmegaVertex))
+		latestDates
+
+	def computeSlacks: scala.collection.mutable.Map[Vertex, Int] =
+		val slacks = scala.collection.mutable.Map[Vertex, Int]()
+
+		for vertex <- _vertices do
+			slacks += (vertex -> (computeLatestDates(vertex) - computeEarliestDates(vertex)))
+		slacks
+
+	def computeCriticalPath: List[Vertex] =
+		val criticalPath = ListBuffer[Vertex]()
+		val slacks = computeSlacks
+
+		var vertex = getOmegaVertex
+		criticalPath += vertex
+
+		while vertex != getAlphaVertex do
+			val predecessor = vertex.incomingEdges.minBy(_.duration).from
+			criticalPath += predecessor
+			vertex = predecessor
+
+		criticalPath.reverse.toList
+
+
 	override def toString: String =
 		var res = ""
 		for vertex <- _vertices do
@@ -235,6 +295,7 @@ object Graph:
 
 		for (vertex, rank) <- ranks do
 			println(vertex.name + " -> " + rank)
+
 	def printDijkstraMatrix(graph:Graph): Unit =
 		val matrix = graph.dijkstraMatrix
 
@@ -252,3 +313,48 @@ object Graph:
 					case i:Int => if i == Int.MaxValue then " ∞ " else f"$i% 2d "
 				)
 			println()
+		
+	def printCalendar(graph: Graph): Unit = {
+		if (graph.hasCycles || graph.hasNegativeDuration) {
+			println("We cannot display the calendar for this graph.")
+		} else {
+			val earliestDates = graph.computeEarliestDates
+			val latestDates = graph.computeLatestDates
+			val slacks = graph.computeSlacks
+			val ranks = graph.computeRanks
+
+			// Sort vertices by rank, then by name or number
+			val sortedVertices = graph.vertices.toSeq.sortBy { vertex =>
+				if (vertex.name == "ɑ") {
+					(0, -1) // ɑ comes first
+				} else if (vertex.name == "ω") {
+					(Int.MaxValue, Int.MaxValue) // ω comes last
+				} else {
+					(ranks(vertex), vertex.name.toInt) // sort by rank, then by number
+				}
+			}
+
+			// Print the header
+			println(f"${"Vertices"}%8s | ${"Rank"}%4s | ${"Earliest Date"}%13s | ${"Latest Date"}%11s | ${"Slack"}%5s")
+			println("=" * 53)
+
+			// Print the data for each vertex
+			for (vertex <- sortedVertices) {
+			val earliestDate = earliestDates(vertex)
+			val latestDate = latestDates(vertex)
+			val slack = slacks(vertex)
+			val rank = ranks(vertex)
+
+			println(f"${vertex.name}%8s | ${rank}%4d | ${earliestDate}%13d | ${latestDate}%11d | ${slack}%5d")
+			}
+
+			print("\n")
+			val criticalPath = graph.computeCriticalPath
+			if (criticalPath.isEmpty) {
+				println("The graph has cycles or negative duration and does not have a critical path.")
+			} else {
+				println("The critical path is:")
+				println(criticalPath.map(_.name).mkString(" -> "))
+			}
+		}
+	}
