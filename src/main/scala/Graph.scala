@@ -1,6 +1,7 @@
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
+import javax.swing._
 
 class Graph(val name: Int):
 	private var _vertices: ArrayBuffer[Vertex] = ArrayBuffer()
@@ -8,8 +9,8 @@ class Graph(val name: Int):
 	def vertices: ArrayBuffer[Vertex] = _vertices
 	def vertices_=(vertices: ArrayBuffer[Vertex]): Unit = _vertices = vertices
 
-	def getAlphaVertex: Vertex = _vertices.find(_.isAlpha).get
-	def getOmegaVertex: Vertex = _vertices.find(_.isOmega).get
+	private def getAlphaVertex: Vertex = _vertices.find(_.isAlpha).get
+	private def getOmegaVertex: Vertex = _vertices.find(_.isOmega).get
 
 	def hasCycles: Boolean =
 		val visited = ArrayBuffer[Vertex]()
@@ -134,7 +135,13 @@ class Graph(val name: Int):
 						sources(k + 1) += successorVertex
 			k += 1
 		ranks
-
+	// adjacent function take two vertices and return true if they are adjacent
+	def adjacent(v1: Vertex, v2: Vertex): Boolean = { // alternate function name for graph displaying
+		v1.outgoingEdges.exists(_.to == v2)
+	}
+	def getEdge(vertex1: Vertex, vertex2: Vertex): Edge = {
+		vertex1.outgoingEdges.find(_.to == vertex2).get
+	}
 	def computeEarliestDates: scala.collection.mutable.Map[Vertex, Int] =
 		val ranks = computeRanks
 		val earliestDates = scala.collection.mutable.Map[Vertex, Int]()
@@ -213,7 +220,6 @@ class Graph(val name: Int):
 		res += "    ↳ Has negative durations: " + hasNegativeDuration + "\n"
 
 		res
-
 object Graph:
 	def sorter(a: Vertex, b: Vertex): Boolean =
 		if a.name == Vertex.OMEGA_NAME || b.name == Vertex.ALPHA_NAME then
