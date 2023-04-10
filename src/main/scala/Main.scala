@@ -8,6 +8,7 @@ object Main extends SimpleSwingApplication {
   var graph: Graph = chooseGraph
   def top: MainFrame = new MainFrame {
     title = "Otograph"
+    size = new Dimension(600, 600)
     val commandList = new ListView[String](List(
       "1: Afficher les arêtes",
       "2: Afficher la matrice d'adjacence",
@@ -64,6 +65,7 @@ object Main extends SimpleSwingApplication {
         })
       }
     }
+    fileDialog.size = new Dimension(400, 150)
     fileDialog.open()
     graph.get
   }
@@ -100,8 +102,8 @@ object Main extends SimpleSwingApplication {
     val frame = new Frame {
       title = "Vertexes"
       contents = boxPanel
+      visible = true
     }
-    frame.visible = true
 
     "Done displaying vertexes"
   }
@@ -133,8 +135,8 @@ object Main extends SimpleSwingApplication {
     val frame = new Frame {
       title = "Adjacency Matrix"
       contents = scrollPane
+      visible = true
     }
-    frame.visible = true
 
     "Done displaying adjacency matrix"
   }
@@ -155,8 +157,8 @@ object Main extends SimpleSwingApplication {
     val frame = new Frame {
       title = "Ranks"
       contents = scrollPane
+      visible = true
     }
-    frame.visible = true
 
     "Done displaying ranks"
   }
@@ -188,8 +190,8 @@ object Main extends SimpleSwingApplication {
     val frame = new Frame {
       title = "Dijkstra Matrix"
       contents = scrollPane
+      visible = true
     }
-    frame.visible = true
 
     "Done displaying Dijkstra matrix"
   }
@@ -245,8 +247,8 @@ object Main extends SimpleSwingApplication {
       val frame = new Frame {
         title = "Calendar"
         contents = scrollPane
+        visible = true
       }
-      frame.visible = true
 
       "Done displaying calendar and critical path"
     }
@@ -258,8 +260,9 @@ object Main extends SimpleSwingApplication {
     val frame = new Frame {
       title = "Ordonnance Graph"
       contents = ordonnanceGraphComponent
+      size = new Dimension(500, 500)
+      visible = true
     }
-    frame.visible = true
     "Done displaying Gantt chart"
   }
 
@@ -268,8 +271,9 @@ object Main extends SimpleSwingApplication {
     val frame = new Frame {
       title = "Graph"
       contents = graphComponent
+      visible = true
+      size = new Dimension(500, 500)
     }
-    frame.visible = true
     "Done displaying graph"
   }
 }
