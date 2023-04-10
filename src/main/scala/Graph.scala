@@ -1,7 +1,7 @@
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ArrayStack, ListBuffer, Map, Queue}
 import scala.io.Source
-import javax.swing._
+import javax.swing.*
+import scala.collection.mutable
 
 class Graph(val name: Int):
 	private var _vertices: ArrayBuffer[Vertex] = ArrayBuffer()
@@ -142,9 +142,9 @@ class Graph(val name: Int):
 	def getEdge(vertex1: Vertex, vertex2: Vertex): Edge = {
 		vertex1.outgoingEdges.find(_.to == vertex2).get
 	}
-	def computeEarliestDates: scala.collection.mutable.Map[Vertex, Int] =
+	def computeEarliestDates: Map[Vertex, Int] =
 		val ranks = computeRanks
-		val earliestDates = scala.collection.mutable.Map[Vertex, Int]()
+		val earliestDates = Map[Vertex, Int]()
 
 		// For all vertices, set their earliest date to 0
 		for vertex <- _vertices do
@@ -200,14 +200,46 @@ class Graph(val name: Int):
 			slacks += (vertex -> (computeLatestDates(vertex) - computeEarliestDates(vertex)))
 		slacks
 
-	def computeCriticalPath: List[Vertex] = 
-		// Get the earliest dates and the latest dates
-		val earliestDates = computeEarliestDates
-		val latestDates = computeLatestDates
+	def computeCriticalPaths: ArrayBuffer[ArrayBuffer[Vertex]] =
+		val earlyDates = computeEarliestDates
 
-		// Check for each vertex if the earliest date is equal to the latest date
-		// If so, the vertex is on the critical path
-		_vertices.filter(vertex => earliestDates(vertex) == latestDates(vertex)).toList
+		val criticalSlacks = computeSlacks
+			.filter(_._2 == 0).keys.toArray
+			.filter(v => v.name != Vertex.ALPHA_NAME)
+			.sortWith((a, b) => earlyDates(a) < earlyDates(b))
+
+		// Do a recursive function to find a path with a list of vertex
+		def pathFinder(currentPath: ArrayBuffer[Vertex], paths: ArrayBuffer[ArrayBuffer[Vertex]]): Unit =
+			if currentPath.last.isOmega then
+				// If the current vertex is the omega vertex, add the path to the list of critical paths
+				paths += currentPath
+			else
+				// If the current vertex is not the omega vertex, find the next vertex
+				// Find the next vertices
+				val nextVertices = currentPath.last.outgoingEdges
+					.map(_.to)
+					.filter(vertex => criticalSlacks.contains(vertex))
+
+				// For each of the possible successors, create a new "branch" (a new path the same as the one that
+				// landed you here), and add the successor to the end of this new path.
+				for nextVertex <- nextVertices do
+					val newCurrentPath = currentPath.clone()
+					newCurrentPath += nextVertex
+					pathFinder(newCurrentPath, paths)
+
+
+		var paths = ArrayBuffer[ArrayBuffer[Vertex]]()
+		pathFinder(ArrayBuffer(getAlphaVertex), paths)
+
+		def computeDurationPath(path: ArrayBuffer[Vertex]): Int =
+			var duration = 0
+			for i <- 0 until path.length - 1 do
+				duration += getEdge(path(i), path(i + 1)).duration
+			duration
+
+		val goalDuration = earlyDates.find(_._1.isOmega).get._2
+
+		paths.filter(path => computeDurationPath(path) == goalDuration)
 
 	override def toString: String =
 		var res = ""
@@ -417,12 +449,12 @@ object Graph:
 			}
 
 			print("\n")
-			val criticalPath = graph.computeCriticalPath
-			if (criticalPath.isEmpty) {
+
+			if (graph.hasCycles || graph.hasNegativeDuration) {
 				println("The graph has cycles or negative duration and does not have a critical path.")
 			} else {
 				println("The critical path is:")
-				println(criticalPath.map(_.name).mkString(" -> "))
+				//println(graph.computeCriticalPath.map(_.name).mkString(" -> "))
 			}
 		}
 	}
@@ -463,12 +495,12 @@ object Graph:
 			}
 
 			result.append("\n")
-			val criticalPath = graph.computeCriticalPath
+			val criticalPath = graph.computeCriticalPaths
 			if (criticalPath.isEmpty) {
 				result.append("The graph has cycles or negative duration and does not have a critical path.\n")
 			} else {
 				result.append("The critical path is:\n")
-				result.append(criticalPath.map(_.name).mkString(" -> ") + "\n")
+				//result.append(criticalPath.map(_.name).mkString(" -> ") + "\n")
 			}
 		}
 		result.toString

@@ -210,6 +210,7 @@ object Main extends SimpleSwingApplication {
       val latestDates = graph.computeLatestDates
       val slacks = graph.computeSlacks
       val ranks = graph.computeRanks
+      val criticalPaths = graph.computeCriticalPaths
 
       // Sort vertices by rank, then by name or number
       val sortedVertices = graph.vertices.toSeq.sortBy { vertex =>
@@ -222,7 +223,7 @@ object Main extends SimpleSwingApplication {
         }
       }
 
-      val data = Array.ofDim[Any](sortedVertices.length + 1, 5)
+      val data = Array.ofDim[Any](sortedVertices.length + criticalPaths.length + 1, 5)
 
       // Add data for each vertex
       for (i <- sortedVertices.indices) {
@@ -240,11 +241,13 @@ object Main extends SimpleSwingApplication {
       }
 
       // Add critical path information
-      val criticalPath = graph.computeCriticalPath
-      if (criticalPath.isEmpty) {
+      if (criticalPaths.isEmpty) {
         data(sortedVertices.length)(0) = "The graph has cycles or negative duration and does not have a critical path."
       } else {
-        data(sortedVertices.length)(0) = "The critical path is: " + criticalPath.map(_.name).mkString(" -> ")
+        data(sortedVertices.length)(0) = "Criticals paths list is: "
+        for (i <- criticalPaths.indices) {
+          data(sortedVertices.length + i + 1)(0) = criticalPaths(i).map(_.name).mkString(" -> ")
+        }
       }
 
       val table = new Table(data, Array("Vertices", "Rank", "Earliest Date", "Latest Date", "Slack"))
