@@ -67,7 +67,6 @@ object Main extends SimpleSwingApplication {
     fileDialog.open()
     graph.get
   }
-  import scala.swing._
 
   private def displayVertexes(graph: Graph): String = {
     val edges = graph.toString
@@ -109,25 +108,27 @@ object Main extends SimpleSwingApplication {
 
   def displayAdjacencyMatrix(graph: Graph): String = {
     val matrix = graph.adjacencyMatrix
-    val data = Array.ofDim[Any](matrix.length + 1, matrix.length + 1)
+    val data = Array.ofDim[Any](matrix.length, matrix.length + 1)
 
     // Add column headers
-    for (i <- matrix.indices) {
-      data(0)(i + 1) = graph.vertices(i).name
-    }
+    // Set "headers" to an array where the first element is empty, and the rest are the column headers
+    val headers = Array.ofDim[String](matrix.length + 1)
+    headers(0) = ""
+    for (i <- graph.vertices.indices) do
+      headers(i + 1) = graph.vertices(i).name
 
     // Add row headers and data
     for (i <- matrix.indices) {
-      data(i + 1)(0) = graph.vertices(i).name
+      data(i)(0) = graph.vertices(i).name
       for (j <- matrix.indices) {
-        data(i + 1)(j + 1) = matrix(i)(j) match {
+        data(i)(j + 1) = matrix(i)(j) match {
           case Some(value) => value.toString
           case None => "•"
         }
       }
     }
 
-    val table = new Table(data, (0 until matrix.length + 1).map(_.toString).toArray)
+    val table = new Table(data, headers)
     val scrollPane = new ScrollPane(table)
     val frame = new Frame {
       title = "Adjacency Matrix"
@@ -140,17 +141,13 @@ object Main extends SimpleSwingApplication {
 
   def displayRanks(graph: Graph): String = {
     val ranks = graph.computeRanks.toSeq.sortWith((a, b) => Graph.sorter(a._1, b._1))
-    val data = Array.ofDim[Any](ranks.length + 1, 2)
-
-    // Add column headers
-    data(0)(0) = "Vertex"
-    data(0)(1) = "Rank"
+    val data = Array.ofDim[Any](ranks.length, 2)
 
     // Add data
     for (i <- ranks.indices) {
       val (vertex, rank) = ranks(i)
-      data(i + 1)(0) = vertex.name
-      data(i + 1)(1) = rank.toString
+      data(i)(0) = vertex.name
+      data(i)(1) = rank.toString
     }
 
     val table = new Table(data, Array("Vertex", "Rank"))
@@ -166,25 +163,27 @@ object Main extends SimpleSwingApplication {
 
   def displayDijkstraMatrix(graph: Graph): String = {
     val matrix = graph.dijkstraMatrix
-    val data = Array.ofDim[Any](matrix.length + 1, matrix.length + 1)
+    val data = Array.ofDim[Any](matrix.length, matrix.length + 1)
 
     // Add column headers
-    for (i <- matrix.indices) {
-      data(0)(i + 1) = graph.vertices(i).name
-    }
+    // Set "headers" to an array where the first element is empty, and the rest are the column headers
+    val headers = Array.ofDim[String](matrix.length + 1)
+    headers(0) = ""
+    for (i <- graph.vertices.indices) do
+      headers(i + 1) = graph.vertices(i).name
 
     // Add row headers and data
     for (i <- matrix.indices) {
-      data(i + 1)(0) = graph.vertices(i).name
+      data(i)(0) = graph.vertices(i).name
       for (j <- matrix.indices) {
-        data(i + 1)(j + 1) = matrix(i)(j) match {
+        data(i)(j + 1) = matrix(i)(j) match {
           case null => "•"
           case i: Int => if (i == Int.MaxValue) "∞" else i.toString
         }
       }
     }
 
-    val table = new Table(data, (0 until matrix.length + 1).map(_.toString).toArray)
+    val table = new Table(data, headers)
     val scrollPane = new ScrollPane(table)
     val frame = new Frame {
       title = "Dijkstra Matrix"
@@ -216,14 +215,7 @@ object Main extends SimpleSwingApplication {
         }
       }
 
-      val data = Array.ofDim[Any](sortedVertices.length + 2, 5)
-
-      // Add column headers
-      data(0)(0) = "Vertices"
-      data(0)(1) = "Rank"
-      data(0)(2) = "Earliest Date"
-      data(0)(3) = "Latest Date"
-      data(0)(4) = "Slack"
+      val data = Array.ofDim[Any](sortedVertices.length + 1, 5)
 
       // Add data for each vertex
       for (i <- sortedVertices.indices) {
@@ -233,19 +225,19 @@ object Main extends SimpleSwingApplication {
         val slack = slacks(vertex)
         val rank = ranks(vertex)
 
-        data(i + 1)(0) = vertex.name
-        data(i + 1)(1) = rank.toString
-        data(i + 1)(2) = earliestDate.toString
-        data(i + 1)(3) = latestDate.toString
-        data(i + 1)(4) = slack.toString
+        data(i)(0) = vertex.name
+        data(i)(1) = rank.toString
+        data(i)(2) = earliestDate.toString
+        data(i)(3) = latestDate.toString
+        data(i)(4) = slack.toString
       }
 
       // Add critical path information
       val criticalPath = graph.computeCriticalPath
       if (criticalPath.isEmpty) {
-        data(sortedVertices.length + 1)(0) = "The graph has cycles or negative duration and does not have a critical path."
+        data(sortedVertices.length)(0) = "The graph has cycles or negative duration and does not have a critical path."
       } else {
-        data(sortedVertices.length + 1)(0) = "The critical path is: " + criticalPath.map(_.name).mkString(" -> ")
+        data(sortedVertices.length)(0) = "The critical path is: " + criticalPath.map(_.name).mkString(" -> ")
       }
 
       val table = new Table(data, Array("Vertices", "Rank", "Earliest Date", "Latest Date", "Slack"))
