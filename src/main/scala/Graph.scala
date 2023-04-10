@@ -184,11 +184,11 @@ class Graph(val name: Int):
 		// Kahn's algorithm
 		val ranks = computeRanks
 		val latestDates = scala.collection.mutable.Map[Vertex, Int]()
-		
+
 		// Set the latest date of the omega vertex as the current date
 		// latestDates(getOmegaVertex) = 0
 		latestDates(getOmegaVertex) = computeEarliestDates(getOmegaVertex)
-		
+
 		// For each rank starting from the omega vertex, find the latest date of the predecessors
 		for (k <- (ranks(getOmegaVertex) - 1) to 0 by -1) {
 			for (vertex <- _vertices if ranks(vertex) == k) {
@@ -198,7 +198,7 @@ class Graph(val name: Int):
 				latestDates(vertex) = latestDate
 			}
 		}
-		
+
 		latestDates
 	}
 
@@ -347,7 +347,7 @@ object Graph:
 			print(names(i) + " ")
 			for j <- matrix.indices do
 				print(matrix(i)(j) match
-					case Some(value) => f"$value% 2d "
+					case Some(value) => f"1  "
 					case None => " • "
 				)
 			println()
@@ -475,8 +475,11 @@ object Graph:
 			if (graph.hasCycles || graph.hasNegativeDuration) {
 				println("The graph has cycles or negative duration and does not have a critical path.")
 			} else {
+				val criticalPaths = graph.computeCriticalPaths
 				println("The critical path is:")
-				//println(graph.computeCriticalPath.map(_.name).mkString(" -> "))
+				for (path <- criticalPaths) {
+					println(path.map(_.name).mkString(" -> "))
+				}
 			}
 		}
 	}
