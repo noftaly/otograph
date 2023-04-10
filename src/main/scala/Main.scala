@@ -3,6 +3,7 @@ import scala.swing._
 import scala.swing.event._
 import scala.swing.Dialog
 import Graph._
+
 object Main extends SimpleSwingApplication {
   var graph: Graph = chooseGraph
   def top: MainFrame = new MainFrame {
@@ -13,9 +14,9 @@ object Main extends SimpleSwingApplication {
       "3: Afficher les rangs",
       "4: Afficher le tableau de Dijkstra",
       "5: Afficher le calendrier et le chemin critique",
-      "6: Changer le graphique",
-      "7: Afficher le diagramme de Gantt",
-      "8: Afficher le graphe",
+      "6: Afficher le diagramme de Gantt",
+      "7: Afficher le graphe",
+      "8: Changer de fichier",
       "9: Quitter"
     ))
     val outputArea = new TextArea
@@ -35,9 +36,9 @@ object Main extends SimpleSwingApplication {
           case Some(3) => outputArea.text = displayRanks(graph)
           case Some(4) => outputArea.text = displayDijkstraMatrix(graph)
           case Some(5) => outputArea.text = displayCalendar(graph)
-          case Some(6) => graph = chooseGraph
-          case Some(7) => outputArea.text = displayGanttChart(graph)
-          case Some(8) => outputArea.text = displayGraph(graph)
+          case Some(6) => outputArea.text = displayGanttChart(graph)
+          case Some(7) => outputArea.text = displayGraph(graph)
+          case Some(8) => graph = chooseGraph
           case Some(9) => sys.exit(0)
           case _ => outputArea.text = "Commande invalide"
         }
