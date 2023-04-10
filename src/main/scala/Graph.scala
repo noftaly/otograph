@@ -17,6 +17,7 @@ class Graph(val name: Int):
 		val stack = ArrayBuffer[Vertex]()
 
 		def hasCyclesUtil(vertex: Vertex): Boolean =
+			// If the vertex is already in the stack, then there is a cycle
 			if !visited.contains(vertex) then
 				visited += vertex
 				stack += vertex
@@ -31,6 +32,7 @@ class Graph(val name: Int):
 		hasCyclesUtil(_vertices.head)
 
 	def hasNegativeDuration: Boolean =
+		// If there is a negative edge, then the graph is not a scheduling graph
 		for vertex <- _vertices do
 			for edge <- vertex.outgoingEdges do
 				if edge.duration < 0 then
@@ -38,6 +40,7 @@ class Graph(val name: Int):
 		false
 
 	def isSchedulingGraph: Boolean =
+		// A scheduling graph must satisfy the following conditions:
 		// 1. A single entry point
 		if _vertices.count(_.isAlpha) != 1 then return false
 		// 2. A single exit point
@@ -54,6 +57,8 @@ class Graph(val name: Int):
 		true
 
 	def adjacencyMatrix: Array[Array[Option[Int]]] =
+
+		// Create a matrix of size |V| x |V| and fill it with None
 		val matrix = Array.ofDim[Option[Int]](_vertices.size, _vertices.size)
 
 		for i <- matrix.indices do
@@ -83,10 +88,12 @@ class Graph(val name: Int):
 
 			if i > 0 then
 				for n <- _vertices.indices do
+					// If the value is not null, then it is the value of the previous iteration
 					if dijkstraMatrix(i)(n) != null then
 						dijkstraMatrix(i)(n) = dijkstraMatrix(i-1)(n)
 
 			for edge <- actualVertex.outgoingEdges do
+				// If the vertex is not in the closed set
 				if m.contains(edge.to) then
 					val actualValue = edge.duration + dijkstraMatrix(i)(edgeMap(actualVertex.name)).asInstanceOf[Int]
 					val oldValue = if i == 0 then Int.MaxValue else dijkstraMatrix(i - 1)(edgeMap(edge.to.name)).asInstanceOf[Int]
@@ -96,6 +103,7 @@ class Graph(val name: Int):
 				dijkstraMatrix(n)(edgeMap(actualVertex.name)) = null
 
 			if m.nonEmpty then
+				// Find the vertex with the minimum value in the last row
 				val minEdge = m.minBy((v: Vertex) => dijkstraMatrix.map(row =>
 					row(edgeMap(v.name)) match
 						case null => Int.MaxValue
@@ -109,6 +117,7 @@ class Graph(val name: Int):
 		dijkstraMatrix
 
 	def computeRanks: scala.collection.mutable.Map[Vertex, Int] =
+		// Kahn's algorithm
 		val ranks = scala.collection.mutable.Map[Vertex, Int]()
 		val predecessors = Array.ofDim[Int](_vertices.length)
 
@@ -143,6 +152,7 @@ class Graph(val name: Int):
 		vertex1.outgoingEdges.find(_.to == vertex2).get
 	}
 	def computeEarliestDates: Map[Vertex, Int] =
+		// Kahn's algorithm
 		val ranks = computeRanks
 		val earliestDates = Map[Vertex, Int]()
 
@@ -171,6 +181,7 @@ class Graph(val name: Int):
 		earliestDates
 
 	def computeLatestDates: scala.collection.mutable.Map[Vertex, Int] = {
+		// Kahn's algorithm
 		val ranks = computeRanks
 		val latestDates = scala.collection.mutable.Map[Vertex, Int]()
 		
@@ -192,7 +203,8 @@ class Graph(val name: Int):
 	}
 
 	//Slacks (float) = latest date - earliest date
-	def computeSlacks: scala.collection.mutable.Map[Vertex, Int] = 
+	def computeSlacks: scala.collection.mutable.Map[Vertex, Int] =
+		// Substract the latest date to the earliest date
 		val slacks = scala.collection.mutable.Map[Vertex, Int]()
 
 		// For all vertices, set their slack (float) to the difference between the latest date and the earliest date
@@ -201,6 +213,7 @@ class Graph(val name: Int):
 		slacks
 
 	def computeCriticalPaths: ArrayBuffer[ArrayBuffer[Vertex]] =
+		// Compute critical slacks
 		val earlyDates = computeEarliestDates
 
 		val criticalSlacks = computeSlacks
@@ -242,6 +255,7 @@ class Graph(val name: Int):
 		paths.filter(path => computeDurationPath(path) == goalDuration)
 
 	override def toString: String =
+		// Sort the vertices by name
 		var res = ""
 		for vertex <- _vertices do
 			for edge <- vertex.outgoingEdges do
@@ -261,6 +275,7 @@ object Graph:
 		a.name.toInt < b.name.toInt
 
 	def makeFromLines(name: Int, lines: List[String]): Graph =
+		// Create the graph
 		val graph = new Graph(name)
 
 		def makeEdge(from: Vertex, to: Vertex): Unit =
@@ -309,6 +324,7 @@ object Graph:
 		graph
 
 	def makeFromFile(name: Int): Graph =
+		// Read the file
 		val sourceFile = Source.fromFile(s"./src/resources/$name.txt")
 
 		val lines = sourceFile.getLines.toList
@@ -317,6 +333,7 @@ object Graph:
 		makeFromLines(name, lines)
 
 	def printAdjacencyMatrix(graph: Graph): Unit = {
+		// Get the adjacency matrix
 		val matrix = graph.adjacencyMatrix
 
 		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
@@ -337,6 +354,7 @@ object Graph:
 	}
 
 	def toStringAdjacencyMatrix(graph: Graph): String = {
+		// Print the adjacency matrix
 		val matrix = graph.adjacencyMatrix
 		val result = new StringBuilder
 
@@ -360,6 +378,7 @@ object Graph:
 		result.toString
 	}
 	def printRanks(graph: Graph): Unit = {
+		// Print the ranks
 		val ranks = graph.computeRanks.toSeq.sortWith((a, b) => Graph.sorter(a._1, b._1))
 
 		for (vertex, rank) <- ranks do
@@ -374,6 +393,7 @@ object Graph:
 			result.toString
 		}
 	def printDijkstraMatrix(graph:Graph): Unit = {
+		// Print the Dijkstra matrix
 		val matrix = graph.dijkstraMatrix
 
 		// Print all the vertices names (padded to 2 chars with a leading 0), and separated by a space
@@ -393,6 +413,7 @@ object Graph:
 	}
 
 	def toStringDijkstraMatrix(graph: Graph): String = {
+		// Print the Dijkstra matrix
 		val matrix = graph.dijkstraMatrix
 		val result = new StringBuilder
 
@@ -415,6 +436,7 @@ object Graph:
 		result.toString
 	}
 	def printCalendar(graph: Graph): Unit = {
+		// Print the calendar
 		if (graph.hasCycles || graph.hasNegativeDuration) {
 			println("We cannot display the calendar for this graph.")
 		} else {
