@@ -142,6 +142,11 @@ object Main extends SimpleSwingApplication {
   }
 
   def displayRanks(graph: Graph): String = {
+    if (graph.hasCycles || graph.hasNegativeDuration) {
+      Dialog.showMessage(null, "We cannot display the ranks for this graph.")
+      return "Failed displaying ranks"
+    }
+
     val ranks = graph.computeRanks.toSeq.sortWith((a, b) => Graph.sorter(a._1, b._1))
     val data = Array.ofDim[Any](ranks.length, 2)
 
