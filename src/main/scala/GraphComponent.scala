@@ -37,6 +37,33 @@ class GraphComponent(graph: Graph) extends Component {
           val edgeMidX = (x1 + x2) / 2
           val edgeMidY = (y1 + y2) / 2
           g.drawString(graph.getEdge(vertex1, vertex2).duration.toString, edgeMidX, edgeMidY)
+
+          // Draw arrowhead
+          val arrowLength = 10
+          val arrowWidth = 7
+
+          val dx = x2 - x1
+          val dy = y2 - y1
+          val theta = math.atan2(dy, dx)
+          val phi = math.atan(arrowWidth.toDouble / arrowLength)
+
+          // Adjust starting point of arrow
+          val arrowStartX = x2 - nodeSize / 2 * math.cos(theta)
+          val arrowStartY = y2 - nodeSize / 2 * math.sin(theta)
+
+          val xPoints = new Array[Int](3)
+          val yPoints = new Array[Int](3)
+
+          xPoints(0) = arrowStartX.toInt
+          yPoints(0) = arrowStartY.toInt
+
+          xPoints(1) = (arrowStartX - arrowLength * math.cos(theta + phi)).toInt
+          yPoints(1) = (arrowStartY - arrowLength * math.sin(theta + phi)).toInt
+
+          xPoints(2) = (arrowStartX - arrowLength * math.cos(theta - phi)).toInt
+          yPoints(2) = (arrowStartY - arrowLength * math.sin(theta - phi)).toInt
+
+          g.fillPolygon(xPoints, yPoints, 3)
         }
       }
     }
