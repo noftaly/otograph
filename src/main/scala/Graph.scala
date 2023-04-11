@@ -347,7 +347,7 @@ object Graph:
 			print(names(i) + " ")
 			for j <- matrix.indices do
 				print(matrix(i)(j) match
-					case Some(value) => f"1  "
+					case Some(value) => f"$value% 2d "
 					case None => " • "
 				)
 			println()
