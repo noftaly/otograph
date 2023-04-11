@@ -174,16 +174,14 @@ object Main extends SimpleSwingApplication {
 
     // Add column headers
     // Set "headers" to an array where the first element is empty, and the rest are the column headers
-    val headers = Array.ofDim[String](matrix.length + 1)
-    headers(0) = ""
+    val headers = Array.ofDim[String](matrix.length)
     for (i <- graph.vertices.indices) do
-      headers(i + 1) = graph.vertices(i).name
+      headers(i) = graph.vertices(i).name
 
     // Add row headers and data
     for (i <- matrix.indices) {
-      data(i)(0) = graph.vertices(i).name
       for (j <- matrix.indices) {
-        data(i)(j + 1) = matrix(i)(j) match {
+        data(i)(j) = matrix(i)(j) match {
           case null => "•"
           case i: Int => if (i == Int.MaxValue) "∞" else i.toString
         }
